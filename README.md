@@ -17,3 +17,10 @@ smart-device is actually paired with the sound recorders through a really quick 
 
 The audio recording was done in Python using the Pi Audio module while the server was coded using Node JS,  
 specifically the Express version. The app was coded in Android to meet the latest device standards (API 25).  
+
+## Collaborators
+
+* Vamshikrishnan Balakrishnan
+* Ramaseshan Parthasarathy
+* Harankumar Nallasivan
+* Benjamin Yan
