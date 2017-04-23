@@ -147,11 +147,8 @@ public class Login extends AppCompatActivity {
      */
     public void onLoginSuccess() {
         loginButton.setEnabled(true);
-        if (checkNetworkConnection()) {
-            new HTTPAsyncTask().execute("http://adapter.cs.rutgers.edu:3000");
-        } else {
-            // error
-        }
+        //new HTTPAsyncTask().execute("http://adapter.cs.rutgers.edu:3000/login");
+
     }
 
     /**
@@ -222,18 +219,24 @@ public class Login extends AppCompatActivity {
             // params comes from the execute() call: params[0] is the url.
             try {
                 return HttpGet(urls[0]);
+
             } catch (IOException e) {
                 return "Unable to retrieve web page. URL may be invalid.";
             }
+
         }
         // onPostExecute displays the results of the AsyncTask.
         @Override
         protected void onPostExecute(String result) {
             Gson gson = new Gson();
-            LoginServerResponse response = gson.fromJson(result, LoginServerResponse.class);
-            String privateKey = response.privateKey;
-            Toast.makeText(getApplicationContext(), privateKey, Toast.LENGTH_LONG);
-            // package username and privateKey into bundle and send in Intent to MainScreen activity
+            if (!result.equals("Did not work!")) {
+                LoginServerResponse response = gson.fromJson(result, LoginServerResponse.class);
+                String privateKey = response.privateKey;
+                Toast.makeText(getApplicationContext(), privateKey, Toast.LENGTH_LONG);
+                // package username and privateKey into bundle and send in Intent to MainScreen activity
+            } else {
+                // prompt again
+            }
         }
     }
 
@@ -247,24 +250,27 @@ public class Login extends AppCompatActivity {
         HttpURLConnection conn = (HttpURLConnection) url.openConnection();
         conn.setRequestMethod("GET");
         conn.setRequestProperty("Content-Type","application/json");
+        conn.setRequestProperty("Accept","application/json");
+        //conn.setRequestProperty("Content-Length", "348");
 
         // make GET request to the given URL
         conn.connect();
 
         // receive response as inputStream
         inputStream = conn.getInputStream();
-        BufferedOutputStream outputStream = new BufferedOutputStream(conn.getOutputStream());
         Gson gson = new Gson();
         LoginServerRequest request = new LoginServerRequest();
         request.username = mailId;
         request.password = pass;
-        String requestJson = gson.toJson(request,LoginServerRequest.class);
+        String requestJson = gson.toJson(request);
+        BufferedOutputStream outputStream = new BufferedOutputStream(conn.getOutputStream());
         outputStream.write(requestJson.getBytes());
 
         // convert inputstream to string
-        if(inputStream != null && conn.getResponseCode() == 200)
+        if(inputStream != null && conn.getResponseCode() == 200) {
             result = convertInputStreamToString(inputStream);
-        else
+            Log.d(TAG, "RESULT: " + result);
+        } else
             result = "Did not work!";
         return result;
     }
