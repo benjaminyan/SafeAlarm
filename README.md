@@ -8,10 +8,12 @@ Old school alarms and detectors have now become "smarter" using SafeAlarm, a sma
 ## How it works
 
 Several audio recorders are placed within the proximity of the target device (i.e. Kitchen Alarm)  
-and try to learn the noise around it given a test input. Then, the recorders will actually listen  
-for an alarm and the maximum squares of amplitude is computed. The data that was collected from the  
-alarm will be sent to the server, which relays it to your smart device via push notifications. That  
-smart-device is actually paired with the sound recorders through a really quick QR scanner.
+and try to learn the noise around it given a test input. A maximum of squares of amplitude will be  
+computed. Then, the recorders will actually listen for an alarm and compare its own calcualtions to  
+the threshold. If the new calculation is greater than or equal to the threshold, the data that was  
+collected from the alarm will be sent to the server, which will then relay it to your smart device  
+via push notifications. Pairing your device with the sound recorder is simple and quick with a built-  
+in QR scanner.
 
 ## Framework
 
