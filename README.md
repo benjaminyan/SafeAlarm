@@ -2,9 +2,7 @@
 
 ## Description
 
-You know how old school fire alarms and CO detectors are still in use in many homes today?  
-Because of that, people outside of their homes will not come to know if any alarm or detector  ssssss
-goes off. However, we aim to find a potential solution using SafeAlarm, a smart IOT home-device.  
+Old school alarms and detectors have now become "smarter" using SafeAlarm, a smart-IOT-application.  
 
 
 ## How it works
