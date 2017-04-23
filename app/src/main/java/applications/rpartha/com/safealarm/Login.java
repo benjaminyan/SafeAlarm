@@ -20,6 +20,11 @@ import android.widget.Toast;
 
 import com.google.gson.Gson;
 
+import org.apache.http.HttpResponse;
+import org.apache.http.client.ClientProtocolException;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.DefaultHttpClient;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -147,7 +152,7 @@ public class Login extends AppCompatActivity {
      */
     public void onLoginSuccess() {
         loginButton.setEnabled(true);
-        //new HTTPAsyncTask().execute("http://adapter.cs.rutgers.edu:3000/login");
+        new HTTPAsyncTask().execute("http://adapter.cs.rutgers.edu:3000");
 
     }
 
@@ -217,11 +222,22 @@ public class Login extends AppCompatActivity {
         protected String doInBackground(String... urls) {
 
             // params comes from the execute() call: params[0] is the url.
+            HttpGet getter = new HttpGet("http://adapter.cs.rutgers.edu:3000/login");
+            getter.setHeader("Content-Type","application/json");
+            getter.setHeader("Expect","100-continue");
+            HttpResponse resp = null;
             try {
-                return HttpGet(urls[0]);
-
+                HttpClient httpClient = new DefaultHttpClient();
+                resp = httpClient.execute(getter);
+            } catch (ClientProtocolException e) {
+                Log.e(getClass().getSimpleName(), "HTTP protocol error", e);
             } catch (IOException e) {
-                return "Unable to retrieve web page. URL may be invalid.";
+                Log.e(getClass().getSimpleName(), "Communication error", e);
+            }
+            if (resp != null) {
+                return resp.toString();
+            } else {
+                return "AYE-PAPI";
             }
 
         }
@@ -229,7 +245,8 @@ public class Login extends AppCompatActivity {
         @Override
         protected void onPostExecute(String result) {
             Gson gson = new Gson();
-            if (!result.equals("Did not work!")) {
+            if (!result.equals("AYE-PAPI")) {
+                Log.d(TAG, "RESULT: " + result);
                 LoginServerResponse response = gson.fromJson(result, LoginServerResponse.class);
                 String privateKey = response.privateKey;
                 Toast.makeText(getApplicationContext(), privateKey, Toast.LENGTH_LONG);
@@ -240,7 +257,7 @@ public class Login extends AppCompatActivity {
         }
     }
 
-    private String HttpGet(String myUrl) throws IOException {
+    /*private String HttpGet(String myUrl) throws IOException{
         InputStream inputStream = null;
         String result = "";
 
@@ -255,6 +272,8 @@ public class Login extends AppCompatActivity {
 
         // make GET request to the given URL
         conn.connect();
+
+
 
         // receive response as inputStream
         inputStream = conn.getInputStream();
@@ -272,6 +291,7 @@ public class Login extends AppCompatActivity {
             Log.d(TAG, "RESULT: " + result);
         } else
             result = "Did not work!";
+        //conn.disconnect();
         return result;
     }
 
@@ -285,6 +305,6 @@ public class Login extends AppCompatActivity {
         inputStream.close();
         return result;
 
-    }
+    }*/
 
 }
