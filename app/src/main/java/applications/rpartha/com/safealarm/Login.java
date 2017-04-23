@@ -138,60 +138,6 @@ public class Login extends AppCompatActivity {
      */
     public void onLoginSuccess() {
         loginButton.setEnabled(true);
-        Log.d(TAG, "login success");
-        //Intent intent = new Intent(Login.this, MainScreen.class);
-        //startActivity(intent);
-        String loginJson = "{\"username\":\""+mailId+"\",\"password\":\""+pass+"\"}";
-        IntentService intentService = new IntentService(loginJson){
-            @Override
-            protected void onHandleIntent(@Nullable Intent intent) {
-                StringBuilder result = new StringBuilder();
-                int status = 200;
-                String loginJson = intent.getDataString();
-                Log.d(TAG, loginJson);
-                HttpURLConnection urlConnection = null;
-                try {
-                    URL url = new URL("http://benjamin-Q504UA:3000/login");
-                    urlConnection = (HttpURLConnection) url.openConnection();
-                    InputStream in = new BufferedInputStream(urlConnection.getInputStream());
-                    BufferedOutputStream out = new BufferedOutputStream(urlConnection.getOutputStream()); /* generate login json */
-                    out.write(loginJson.getBytes());
-                    status = urlConnection.getResponseCode();
-                    BufferedReader reader = new BufferedReader(new InputStreamReader(in));
-                    String line;
-                    while ((line = reader.readLine()) != null) {
-                        result.append(line);
-                    }
-                }catch( Exception e) {
-                    e.printStackTrace();
-                }
-                finally {
-                    if (urlConnection != null) urlConnection.disconnect();
-                }
-                if (status != 200) {
-                    onLoginFailed();
-                } else {
-                    // make a JsonReader, pass in the result, get privateKey, pass both privateKey and username to main activity
-                    try {
-                        JSONObject jsonObject = new JSONObject(loginJson);
-                        String privateKey = jsonObject.getString("privateKey");
-                        Toast.makeText(this, "private key is: " + privateKey, Toast.LENGTH_SHORT).show();
-
-                    } catch (final JSONException e) {
-                        Log.e(TAG, "Json parsing error: " + e.getMessage());
-                        runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                Toast.makeText(getApplicationContext(),
-                                        "Json parsing error: " + e.getMessage(),
-                                        Toast.LENGTH_LONG).show();
-                            }
-                        });
-                    }
-                }
-            }
-        };
-
     }
 
     /**
