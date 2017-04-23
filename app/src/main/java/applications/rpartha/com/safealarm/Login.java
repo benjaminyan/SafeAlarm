@@ -2,7 +2,11 @@ package applications.rpartha.com.safealarm;
 
 import android.app.IntentService;
 import android.app.ProgressDialog;
+import android.content.Context;
 import android.content.Intent;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
@@ -14,12 +18,15 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
+import com.google.gson.Gson;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
@@ -27,6 +34,8 @@ import java.net.URL;
 
 import butterknife.Bind;
 import butterknife.ButterKnife;
+import pojos.LoginServerRequest;
+import pojos.LoginServerResponse;
 
 /**
  * The type Login activity.
@@ -138,6 +147,11 @@ public class Login extends AppCompatActivity {
      */
     public void onLoginSuccess() {
         loginButton.setEnabled(true);
+        if (checkNetworkConnection()) {
+            new HTTPAsyncTask().execute("http://adapter.cs.rutgers.edu:3000");
+        } else {
+            // error
+        }
     }
 
     /**
@@ -165,17 +179,13 @@ public class Login extends AppCompatActivity {
             isValid = false;
         }
 
-        else if(!mailId.equals("test.user@mail.com")){
-            emailText.setError("wrong email address");
-            isValid = false;
-        }
 
         else{
             emailText.setError(null);
         }
 
 
-        if(!pass.equals("test_password")){
+        if(!(pass.length() >= 8)){
             isValid = false;
         }
 
@@ -184,6 +194,91 @@ public class Login extends AppCompatActivity {
         }
 
         return isValid;
+    }
+
+    // check network connection
+    public boolean checkNetworkConnection() {
+        ConnectivityManager connMgr = (ConnectivityManager)
+                getSystemService(Context.CONNECTIVITY_SERVICE);
+
+        NetworkInfo networkInfo = connMgr.getActiveNetworkInfo();
+        boolean isConnected = false;
+        if (networkInfo != null && (isConnected = networkInfo.isConnected())) {
+            // show "Connected" & type of network "WIFI or MOBILE"
+            Log.d(TAG, "Connected "+networkInfo.getTypeName());
+
+        } else {
+            // show "Not Connected"
+            Log.d(TAG, "Not connected");
+        }
+
+        return isConnected;
+    }
+
+    private class HTTPAsyncTask extends AsyncTask<String, Void, String> {
+        @Override
+        protected String doInBackground(String... urls) {
+
+            // params comes from the execute() call: params[0] is the url.
+            try {
+                return HttpGet(urls[0]);
+            } catch (IOException e) {
+                return "Unable to retrieve web page. URL may be invalid.";
+            }
+        }
+        // onPostExecute displays the results of the AsyncTask.
+        @Override
+        protected void onPostExecute(String result) {
+            Gson gson = new Gson();
+            LoginServerResponse response = gson.fromJson(result, LoginServerResponse.class);
+            String privateKey = response.privateKey;
+            Toast.makeText(getApplicationContext(), privateKey, Toast.LENGTH_LONG);
+            // package username and privateKey into bundle and send in Intent to MainScreen activity
+        }
+    }
+
+    private String HttpGet(String myUrl) throws IOException {
+        InputStream inputStream = null;
+        String result = "";
+
+        URL url = new URL(myUrl);
+
+        // create HttpURLConnection
+        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+        conn.setRequestMethod("GET");
+        conn.setRequestProperty("Content-Type","application/json");
+
+        // make GET request to the given URL
+        conn.connect();
+
+        // receive response as inputStream
+        inputStream = conn.getInputStream();
+        BufferedOutputStream outputStream = new BufferedOutputStream(conn.getOutputStream());
+        Gson gson = new Gson();
+        LoginServerRequest request = new LoginServerRequest();
+        request.username = mailId;
+        request.password = pass;
+        String requestJson = gson.toJson(request,LoginServerRequest.class);
+        outputStream.write(requestJson.getBytes());
+
+        // convert inputstream to string
+        if(inputStream != null && conn.getResponseCode() == 200)
+            result = convertInputStreamToString(inputStream);
+        else
+            result = "Did not work!";
+        return result;
+    }
+
+    private static String convertInputStreamToString(InputStream inputStream) throws IOException{
+        BufferedReader bufferedReader = new BufferedReader( new InputStreamReader(inputStream));
+        String line = "";
+        String result = "";
+        while((line = bufferedReader.readLine()) != null)
+            result += line;
+
+        inputStream.close();
+        return result;
+
     }
 
 }
