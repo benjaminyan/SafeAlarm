@@ -34,7 +34,9 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
 import java.net.URL;
 
 import butterknife.Bind;
@@ -83,53 +85,105 @@ public class Login extends AppCompatActivity {
                 login();
             }
         });
-
-        /*signupLink.setOnClickListener(new View.OnClickListener(){
-            @Override
-            public void onClick(View view){
-                Intent intent = new Intent(getApplicationContext(), SignUpActivity.class);
-                startActivityForResult(intent, REQUEST_SIGNUP);
-                finish();
-                overridePendingTransition(R.anim.push_left_in, R.anim.push_left_out);
-                Toast.makeText(getApplicationContext(), "SignUp through the app is currently not available yet!", Toast.LENGTH_LONG);
-            }
-        });*/
     }
 
+    public static class LoginOutput {
+        int status;
+        String result;
+    }
     /**
      * Login.
      */
-    public void login(){
-        Log.d(TAG, "MainScreen");
+    public void login() {
+        if (passwordChecked()) {
+            loginButton.setEnabled(false); //find me1 sss
 
-        if(!passwordChecked()){
-            onLoginFailed();
-            return;
+            final ProgressDialog progressDialog = new ProgressDialog(Login.this, R.style.AppTheme_Dark_Dialog);//this is cool
+            progressDialog.setIndeterminate(true);
+            progressDialog.setMessage("Authenticating User...");
+            progressDialog.show();
+
+            mailId = emailText.getText().toString();
+            pass = passwordText.getText().toString();
+
+            //ADD AUTHENTICATION LOGIC HERE//
+            //CHECK USERS AGAINST DATABASE//
+
+            new android.os.Handler().postDelayed(
+                    new Runnable() {
+                        @Override
+                        public void run() {
+                            Log.d(TAG, "Got here");
+                            new AsyncTask<Void,Void,LoginOutput>() {
+                                public LoginOutput doInBackground(Void... args) {
+                                    HttpURLConnection conn = null;
+                                    LoginOutput output = null;
+                                    try {
+                                        URL url = new URL("http://adapter.cs.rutgers.edu:3000/login");
+                                        conn = (HttpURLConnection) url.openConnection();
+                                        conn.setRequestProperty("Content-Type","application/json; charset=UTF-8");
+                                        conn.setRequestProperty("Accept","application/json; charset=UTF-8");
+                                        conn.setRequestProperty("keep-alive","true");
+                                        conn.setConnectTimeout(5000);
+                                        conn.setDoInput(true);
+                                        conn.setDoOutput(true);
+                                        conn.setRequestMethod("POST");
+                                        LoginServerRequest req = new LoginServerRequest();
+                                        req.password = pass;
+                                        req.username = mailId;
+                                        Gson gson = new Gson();
+                                        String body = gson.toJson(req);
+                                        Log.d(TAG,"!!!BODY!!! " + body);
+                                        conn.connect();
+                                        OutputStreamWriter wr = new OutputStreamWriter(conn.getOutputStream());
+                                        wr.write(body);
+                                        wr.flush();
+                                        InputStream is = conn.getInputStream();
+                                        InputStreamReader isr = new InputStreamReader(is);
+                                        BufferedReader reader = new BufferedReader(isr);
+                                        // BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+                                        StringBuilder builder = new StringBuilder();
+                                        String str = reader.readLine();
+                                        while (str != null) {
+                                            builder.append(str);
+                                            str = reader.readLine();
+                                        }
+                                        String result = builder.toString();
+                                        // String result = conn.getResponseMessage();
+                                        output = new LoginOutput();
+                                        output.status = conn.getResponseCode();
+                                        output.result = result;
+                                    } catch(MalformedURLException e) {
+                                        Log.d(TAG, "!!!ERROR!!! Malformed URL");
+                                    } catch (IOException e) {
+                                        Log.d(TAG, "!!!ERROR!!! IO Exception");
+                                    } finally {
+                                        if (conn != null) conn.disconnect();
+                                    }
+                                    return output;
+                                }
+
+                                public void onPostExecute(LoginOutput result) {
+                                    if (result != null && result.status == 200) {
+                                        Log.d(TAG, "!!!RESULT!!!" + result.result);
+                                        Intent intent = new Intent(Login.this, MainScreen.class);
+                                        intent.putExtra("username",mailId);
+                                        intent.putExtra("privateKey",result.result);
+                                        startActivity(intent);
+                                        // pass result.result as privateKey to the next activity along with username
+                                    } else {
+                                        Log.d(TAG, "!!!RESULT!!!: Error.");
+                                        loginButton.setEnabled(true);
+                                    }
+                                }
+                            }.execute();
+                            progressDialog.dismiss();
+                        }
+                    }, 3000
+            );
+        } else {
+            // error message
         }
-
-        loginButton.setEnabled(false); //find me1 sss
-
-        final ProgressDialog progressDialog = new ProgressDialog(Login.this, R.style.AppTheme_Dark_Dialog);//this is cool
-        progressDialog.setIndeterminate(true);
-        progressDialog.setMessage("Authenticating User...");
-        progressDialog.show();
-
-        mailId = emailText.getText().toString();
-        pass = passwordText.getText().toString();
-
-        //ADD AUTHENTICATION LOGIC HERE//
-        //CHECK USERS AGAINST DATABASE//
-
-        new android.os.Handler().postDelayed(
-                new Runnable() {
-                    @Override
-                    public void run() {
-                        Log.d(TAG, "Got here");
-                        onLoginSuccess();
-                        progressDialog.dismiss();
-                    }
-                }, 3000
-        );
     }
 
     @Override
@@ -145,24 +199,6 @@ public class Login extends AppCompatActivity {
     @Override
     public void onBackPressed() {
         moveTaskToBack(true);
-    }
-
-    /**
-     * If login success, go to main screen
-     */
-    public void onLoginSuccess() {
-        loginButton.setEnabled(true);
-        new HTTPAsyncTask().execute("http://adapter.cs.rutgers.edu:3000");
-
-    }
-
-    /**
-     * If login failed.
-     */
-    public void onLoginFailed() {
-        Toast.makeText(getBaseContext(), "Login failed like due to incorrect email or password.", Toast.LENGTH_LONG).show();
-
-        loginButton.setEnabled(true);
     }
 
     /**
@@ -197,114 +233,5 @@ public class Login extends AppCompatActivity {
 
         return isValid;
     }
-
-    // check network connection
-    public boolean checkNetworkConnection() {
-        ConnectivityManager connMgr = (ConnectivityManager)
-                getSystemService(Context.CONNECTIVITY_SERVICE);
-
-        NetworkInfo networkInfo = connMgr.getActiveNetworkInfo();
-        boolean isConnected = false;
-        if (networkInfo != null && (isConnected = networkInfo.isConnected())) {
-            // show "Connected" & type of network "WIFI or MOBILE"
-            Log.d(TAG, "Connected "+networkInfo.getTypeName());
-
-        } else {
-            // show "Not Connected"
-            Log.d(TAG, "Not connected");
-        }
-
-        return isConnected;
-    }
-
-    private class HTTPAsyncTask extends AsyncTask<String, Void, String> {
-        @Override
-        protected String doInBackground(String... urls) {
-
-            // params comes from the execute() call: params[0] is the url.
-            HttpGet getter = new HttpGet("http://adapter.cs.rutgers.edu:3000/login");
-            getter.setHeader("Content-Type","application/json");
-            getter.setHeader("Expect","100-continue");
-            HttpResponse resp = null;
-            try {
-                HttpClient httpClient = new DefaultHttpClient();
-                resp = httpClient.execute(getter);
-            } catch (ClientProtocolException e) {
-                Log.e(getClass().getSimpleName(), "HTTP protocol error", e);
-            } catch (IOException e) {
-                Log.e(getClass().getSimpleName(), "Communication error", e);
-            }
-            if (resp != null) {
-                return resp.toString();
-            } else {
-                return "AYE-PAPI";
-            }
-
-        }
-        // onPostExecute displays the results of the AsyncTask.
-        @Override
-        protected void onPostExecute(String result) {
-            Gson gson = new Gson();
-            if (!result.equals("AYE-PAPI")) {
-                Log.d(TAG, "RESULT: " + result);
-                LoginServerResponse response = gson.fromJson(result, LoginServerResponse.class);
-                String privateKey = response.privateKey;
-                Toast.makeText(getApplicationContext(), privateKey, Toast.LENGTH_LONG);
-                // package username and privateKey into bundle and send in Intent to MainScreen activity
-            } else {
-                // prompt again
-            }
-        }
-    }
-
-    /*private String HttpGet(String myUrl) throws IOException{
-        InputStream inputStream = null;
-        String result = "";
-
-        URL url = new URL(myUrl);
-
-        // create HttpURLConnection
-        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-        conn.setRequestMethod("GET");
-        conn.setRequestProperty("Content-Type","application/json");
-        conn.setRequestProperty("Accept","application/json");
-        //conn.setRequestProperty("Content-Length", "348");
-
-        // make GET request to the given URL
-        conn.connect();
-
-
-
-        // receive response as inputStream
-        inputStream = conn.getInputStream();
-        Gson gson = new Gson();
-        LoginServerRequest request = new LoginServerRequest();
-        request.username = mailId;
-        request.password = pass;
-        String requestJson = gson.toJson(request);
-        BufferedOutputStream outputStream = new BufferedOutputStream(conn.getOutputStream());
-        outputStream.write(requestJson.getBytes());
-
-        // convert inputstream to string
-        if(inputStream != null && conn.getResponseCode() == 200) {
-            result = convertInputStreamToString(inputStream);
-            Log.d(TAG, "RESULT: " + result);
-        } else
-            result = "Did not work!";
-        //conn.disconnect();
-        return result;
-    }
-
-    private static String convertInputStreamToString(InputStream inputStream) throws IOException{
-        BufferedReader bufferedReader = new BufferedReader( new InputStreamReader(inputStream));
-        String line = "";
-        String result = "";
-        while((line = bufferedReader.readLine()) != null)
-            result += line;
-
-        inputStream.close();
-        return result;
-
-    }*/
 
 }
