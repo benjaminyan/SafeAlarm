@@ -138,7 +138,7 @@ public class CustomAlarm extends AppCompatActivity {
                             }
 
                             public void onPostExecute(CustomAlarmOutput result) {
-                                if (result != null /*&& result.status == 200*/) {
+                                if (result != null && result.status == 200) {
                                     Log.d(TAG, "!!!RESULT!!!" + result.result);
                                     Intent intent = new Intent(CustomAlarm.this, HappyActivity.class); // REPLACE
                                     intent.putExtra("username",username);
