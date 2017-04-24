@@ -2,7 +2,7 @@
 
 ## Description
 
-Old school alarms and detectors have now become "smarter" using SafeAlarm, a smart-IOT-application.  
+Old-school alarms and detectors have now become "smarter" using SafeAlarm, a smart-IOT-application.  
 
 ## Inspiration
 
