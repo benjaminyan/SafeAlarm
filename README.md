@@ -6,7 +6,7 @@ Old school alarms and detectors have now become "smarter" using SafeAlarm, a sma
 
 ## Inspiration
 
-Haran was asleep late in the morning. The carbon monoxide alarm went off, and his dog was panicking and crying out of fear because he didn't understand what was happening. It turned out that the alarm had just reached the end of its life cycle, but if he hadn't been there, it would have still caused my dog unreasonable levels of stress by ringing the entire day until his parents would have came back.
+Haran was asleep late in the morning. The carbon monoxide alarm went off, and his dog was panicking and crying out of fear because he didn't understand what was happening. It turned out that the alarm had just reached the end of its life cycle, but if he hadn't been there, it would have still caused his dog unreasonable levels of stress by ringing the entire day until his parents would have came back.
 
 
 ## How it works
