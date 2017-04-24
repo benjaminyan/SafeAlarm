@@ -2,7 +2,7 @@
 
 ## Description
 
-Old-school alarms and detectors have now become "smarter" using SafeAlarm, a smart-IOT connected network.  
+Old-school alarms and detectors have now become "smarter" using SafeAlarm, a smart-IoT connected network.  
 
 ## Inspiration
 
