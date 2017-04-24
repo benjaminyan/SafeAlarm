@@ -15,7 +15,7 @@ It is an IoT audio recorder meant to be mounted close to a house alarm of any so
 
 ## Framework
 
-The audio recording was done in Python using the pyauudio module (Ben) while the server was coded using Node JS,  
+The audio recording was done in Python using the pyaudio module (Ben) while the server was coded using Node JS,  
 specifically the Express version (Haran). The app was coded in Android to meet the latest stable device standards, which  
 is currently API 25 (Ram).  
 
